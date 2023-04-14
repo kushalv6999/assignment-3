@@ -1,61 +1,62 @@
+// Include guard to prevent multiple inclusion of the same header file
 #ifndef __FREERTOS_H__
 #define __FREERTOS_H__
 
- 
-// Pin numbers
-#define T1_PIN        18  // led pin for task 1 
-#define T2_PIN        2   // input pin for frequency 1 (task2)
-#define T3_PIN        3   // input pin for frequency 2 (task3)
-#define T4_ANIN_PIN   5   // Number of samples to average in task 4
-#define T4_LED_PIN    0   // LED pin for task 4 
-#define T6_PIN        4   // Task 6 push button input pin
-#define T7_PIN        1   // LED output pin Task 7 
+//Define IO pins used by each task
+#define Task1_PIN         18    // Pin 18 set as output for Task1
+#define Task2_PIN          2    // Pin 2 set as input for Task2 
+#define Task3_PIN          3    // Pin 3 set as input for Task3
+#define Task4_ANLGIN_PIN   5    // Pin 5 set as input for Task4
+#define Task4_LED_PIN      0    // Pin 0 set as output for Task4
+#define Task6_PIN          4    // Pin 4 set as input for Task6
+#define Task7_PIN          1    // Pin 1 set as output for Task7 
 
-// Task periods (ms)
-#define TASK1_P       4     
-#define TASK2_P       20    
-#define TASK3_P       8     
-#define TASK4_P       20   
-#define TASK5_P       100   
-#define TASK6_P       10    
-#define TASK7_P       8     
+//Define Baud_Rate, Timeouts and minimum/maximum frequencies  
+#define BAUD_RATE       9600  // Baud rate for serial communication
+#define TASK2_TIMEOUT   3100  // Timeout in milliseconds for Task2 
+#define TASK2_MINFREQ   333   // Minimum frequency in Hertz (Hz) for Task2 
+#define TASK2_MAXFREQ   1000  // Maximum frequency in Hertz (Hz) for Task2
+#define TASK3_TIMEOUT   2100  // Timeout in milliseconds for Task3
+#define TASK3_MINFREQ   500   // Minimum frequency in Hertz (Hz) for Task3
+#define TASK3_MAXFREQ   1000  // Maximum frequency in Hertz (Hz) for Task3
+#define NUM_PARAMS      4     // Number of parameters in array for Task4
+#define TASK4_THRESH    2048  // Threshold value to turn LED on in Task4
+#define TASK5_MIN       0     // Minimum value for mapping range in Task5
+#define TASK5_MAX       99    // Maximum value for mapping range in Task5
 
-// Task parameters
-#define BAUD_RATE       9600  // Baud rate 
-#define TASK2_TIMEOUT   3100  // Timeout for pulseIn = worst case in us
-#define TASK2_MINFREQ   333   // Task 2 minimum frequency of waveform in Hz
-#define TASK2_MAXFREQ   1000  // Task 2 maximum frequency of waveform in Hz
-#define TASK3_TIMEOUT   2100  // Timeout for pulseIn = worst case in us
-#define TASK3_MINFREQ   500   // Task 3 minimum frequency of waveform in Hz
-#define TASK3_MAXFREQ   1000  // Task 3 maximum frequency of waveform in Hz
-#define NUM_PARAMS      4     // Task 4 length of array for storing past measurements
-#define TASK4_THRESH    2048  // Task 4 threshold for turning LED on
-#define TASK5_MIN       0     // Task 5 lower bound of range
-#define TASK5_MAX       99    // Task 5 upper bound of range
+//Define data types
+typedef unsigned char uint8;  // unsigned 8-bit integer
+typedef unsigned int uint16;  // unsigned 16-bit integer
+typedef unsigned long uint32; // unsigned 32-bit integer
 
-// Helpful typedefs
-typedef unsigned char uint8;
-typedef unsigned int uint16;
-typedef unsigned long uint32;
+//Define priority of each task
+#define TASK1_P       4      // Task1 period
+#define TASK2_P       20     // Task2 period
+#define TASK3_P       8      // Task3 period
+#define TASK4_P       20     // Task4 period
+#define TASK5_P       100    // Task5 period
+#define TASK6_P       10     // Task6 period
+#define TASK7_P       8      // Task7 period
 
-// Data structure for holding task 2 & 3 frequencies
-typedef struct Freqs {
+//Define a frequency structure
+typedef struct Freqs {       // Struct to store frequencies
     double freq_t2;
     double freq_t3;
 } Freqs;
 
-// Funtion Prototypes
-void task1(void *pvParameters);
-void task2(void *pvParameters);
-void task3(void *pvParameters);
-void task4(void *pvParameters);
-void task5(void *pvParameters);
-void task6(void *pvParameters);
-void task7(void *pvParameters);
+//Declare each task
+void task1(void *pvParameters); //Declares a function called task1 which takes one parameter of type void
+void task2(void *pvParameters); //Declares a function called task2 which takes one parameter of type void
+void task3(void *pvParameters); //Declares a function called task3 which takes one parameter of type void
+void task4(void *pvParameters); //Declares a function called task4 which takes one parameter of type void
+void task5(void *pvParameters); //Declares a function called task5 which takes one parameter of type void
+void task6(void *pvParameters); //Declares a function called task6 which takes one parameter of type void
+void task7(void *pvParameters); //Declares a function called task7 which takes one parameter of type void
 
- #endif  // __FREERTOS_H__
+#endif  // __FREERTOS_H__
 
 // Convert period in us to frequency in Hz
+#define periodToFreq
 #define periodToFreq_us(T) (1 / (T / 1000000))
 
 // Convert freeRTOS ticks to real time in ms
@@ -66,210 +67,199 @@ void task7(void *pvParameters);
 #define ARDUINO_RUNNING_CORE 1
 #endif
 
-// Data structure & semaphore for storing task 2 & 3 frequencies
-Freqs freqs;
-SemaphoreHandle_t freqSem;
-QueueHandle_t btnQueue;
-uint16 anIn[NUM_PARAMS];  // Array for storing previous analogue measurements
-uint8 currInd;            // Current index to overwrite in anIn[]
+//Declare Semaphores and Queues to be used by tasks
+Freqs freqs; 
+SemaphoreHandle_t freqSem;  // Semaphore to protect data in struct Freqs 
+QueueHandle_t btnQueue;     //  Queue to store button values in Task6
+uint16 anIn[NUM_PARAMS];    //  Array to store analogue input values
+uint8 currInd;              //  Current index of analogue input array 
 
-
+//Define the setup function
 void setup() {
+  Serial.begin(BAUD_RATE);          // Initialize serial communication
+  pinMode(Task1_PIN, OUTPUT);       // Set Task1 pin as output
+  pinMode(Task2_PIN, INPUT);        // Set Task2 pin as input
+  pinMode(Task3_PIN, INPUT);        // Set Task3 pin as input
+  pinMode(Task4_ANLGIN_PIN, INPUT); // Set Task4 analogue input pin 
+  pinMode(Task4_LED_PIN, OUTPUT);   // Set Task4 LED pin as output
+  pinMode(Task6_PIN, INPUT);        // Set Task6 pin as input
+  pinMode(Task7_PIN, OUTPUT);       // Set Task7 pin as output
 
-  Serial.begin(BAUD_RATE);
+  currInd = 0; // Set current index of analogue input array to 0
 
-  // Define pin inputs/outputs
-  pinMode(T1_PIN, OUTPUT);
-  pinMode(T2_PIN, INPUT);
-  pinMode(T3_PIN, INPUT);
-  pinMode(T4_ANIN_PIN, INPUT);
-  pinMode(T4_LED_PIN, OUTPUT);
-  pinMode(T6_PIN, INPUT);
-  pinMode(T7_PIN, OUTPUT);
-
-
-  // Initialise task 4 analogue input array with 0's
-  currInd = 0;
+  // Initialize analogue input array values to 0
   for (uint8 i = 0; i < NUM_PARAMS; i++) {
     anIn[i] = 0;
   }
 
-  // Initialise task 2 & 3 frequencies to 0
-  freqs.freq_t2 = 0;
-  freqs.freq_t3 = 0;
+  freqs.freq_t2 = 0; // Initialize frequency of Task2 to 0 
+  freqs.freq_t3 = 0; // Initialize frequency of Task3 to 0
 
-  freqSem = xSemaphoreCreateMutex();
-  btnQueue = xQueueCreate(1, sizeof(uint8));
+  freqSem = xSemaphoreCreateMutex(); // Create semaphore to protect data in Freqs struct
+  btnQueue = xQueueCreate(1, sizeof(uint8)); // Create queue to store button values in Task6
 
+  // Create task 1 with priority 3
   xTaskCreate(
     task1,
-    "task1",
-    512,
+    "task1",512,
     (void*) 1,
-    3,
-    NULL);
+    3,NULL);
 
+  // Create task 2 with priority 2
   xTaskCreate(
     task2,
-    "task2",
-    512,
+    "task2",512,
     (void*) 1,
-    2,
-    NULL);
+    2,NULL);
 
+  // Create task 3 with priority 3
   xTaskCreate(
     task3,
-    "task3",
-    512,
+    "task3",512,
     (void*) 1,
-    3,
-    NULL);
+    3,NULL);
 
+  // Create task 4 with priority 2
   xTaskCreate(
     task4,
-    "task4",
-    512,
+    "task4",512,
     (void*) 1,
-    2,
-    NULL);
+    2,NULL);
 
+  // Create task 5 with priority 1
   xTaskCreate(
     task5,
-    "task5",
-    512,
+    "task5",512,
     (void*) 1,
-    1,
-    NULL);
+    1,NULL);
 
+  // Create task 6 with priority 1
   xTaskCreate(
     task6,
-    "task6",
-    512,
+    "task6",512,
     (void*) 1,
-    1,
-    NULL);
+    1,NULL);
 
+  // Create task 7 with priority 1
   xTaskCreate(
     task7,
-    "task7",
-    512,
+    "task7",512,
     (void*) 1,
-    1,
-    NULL);
+    1,NULL);
 }
 
-// Period = 4ms / Rate = 250Hz
+// Task 1 function (Period = 4ms / Rate = 250Hz)
 void task1(void *pvParameters) {
-  (void) pvParameters;
-  for (;;) {
-    // Generate waveform
-    digitalWrite(T1_PIN, HIGH);
-    delayMicroseconds(200);
-    digitalWrite(T1_PIN, LOW);
-    delayMicroseconds(50);
-    digitalWrite(T1_PIN, HIGH);
-    delayMicroseconds(30);
-    digitalWrite(T1_PIN, LOW);
-    waitTask(TASK1_P);
-  }
+(void) pvParameters; // Cast pvParameters to void to avoid compiler warning
+for (;;) {
+// Generate waveform by toggling a pin
+digitalWrite(Task1_PIN, HIGH); // Set Task1_PIN to HIGH
+delayMicroseconds(200); // Wait for 200 microseconds
+digitalWrite(Task1_PIN, LOW); // Set Task1_PIN to LOW
+delayMicroseconds(50); // Wait for 50 microseconds
+digitalWrite(Task1_PIN, HIGH); // Set Task1_PIN to HIGH
+delayMicroseconds(30); // Wait for 30 microseconds
+digitalWrite(Task1_PIN, LOW); // Set Task1_PIN to LOW
+waitTask(TASK1_P); // Suspend the task for the specified period
+}
 }
 
-// Period = 20ms / Rate = 50Hz
+// Task 2 function (Period = 20ms / Rate = 50Hz)
 void task2(void *pvParameters) {
-  (void) pvParameters;
+  (void) pvParameters; // Cast pvParameters to void to avoid compiler warning
   for (;;) {
-    // Measure period when signal is HIGH
+    // Measure period when signal is HIGH on Task2 pin
     // Multiply by 2 because 50% duty cycle
-    int pulseHigh = pulseIn(T2_PIN, HIGH);
-    int pulseLow = pulseIn(T2_PIN, LOW);
+    int pulseHigh = pulseIn(Task2_PIN, HIGH); // Measures the time period of the pulse in microseconds when the signal is high
+    int pulseLow = pulseIn(Task2_PIN, LOW); // Measures the time period of the pulse in microseconds when the signal is low
     float pulseTotal = pulseHigh + pulseLow; // Time period of the pulse in microseconds
     float frequency1 = 1000000 / pulseTotal; // Frequency in Hertz (Hz)
-    Serial.println(frequency1);
-     if(xSemaphoreTake(freqSem, portMAX_DELAY) == pdTRUE) {
-      xSemaphoreGive(freqSem);
+    Serial.println(frequency1); // Prints the frequency to the serial port
+     if(xSemaphoreTake(freqSem, portMAX_DELAY) == pdTRUE) { // Waits for the semaphore to be unlocked
+      xSemaphoreGive(freqSem); // Unlocks the semaphore
     }
-    waitTask(TASK2_P);
+    waitTask(TASK2_P); // Waits for the specified time period for the task2
   }
 }
 
-// Period = 8ms / Rate = 125Hz
+// Task 3 function (Period = 8ms / Rate = 125Hz)
 void task3(void *pvParameters) {
   (void) pvParameters;
   for (;;) {
-    // Measure period when signal is HIGH
+    // Measure period when signal is HIGH on Task3 pin
     // Multiply by 2 because 50% duty cycle
-    int pulseHigh = pulseIn(T3_PIN, HIGH);
-    int pulseLow = pulseIn(T3_PIN, LOW);
+    int pulseHigh = pulseIn(Task3_PIN, HIGH); // Measures the time period of the pulse in microseconds when the signal is high
+    int pulseLow = pulseIn(Task3_PIN, LOW); // Measures the time period of the pulse in microseconds when the signal is low
     float pulseTotal = pulseHigh + pulseLow; // Time period of the pulse in microseconds
     float frequency2 = 1000000 / pulseTotal; // Frequency in Hertz (Hz)
-    Serial.println(frequency2);
-    if(xSemaphoreTake(freqSem, portMAX_DELAY) == pdTRUE) {
-    xSemaphoreGive(freqSem);
+    Serial.println(frequency2); // Prints the frequency to the serial port
+    if(xSemaphoreTake(freqSem, portMAX_DELAY) == pdTRUE) { // Waits for the semaphore to be unlocked
+    xSemaphoreGive(freqSem); // Unlocks the semaphore
     }
-    waitTask(TASK3_P);
+    waitTask(TASK3_P); // Waits for the specified time period for the task3
   }
 }
 
-// Period = 20ms / Rate = 50Hz
+// Task 4 function (Period = 20ms / Rate = 50Hz)
 void task4(void *pvParameters) {
   (void) pvParameters;
   for (;;) {
     // Read analogue signal and increment index for next reading
     // Analogue signal converted to 12 bit integer
-    anIn[currInd] = analogRead(T4_ANIN_PIN);
-    currInd = (currInd + 1) % NUM_PARAMS;
+    anIn[currInd] = analogRead(Task4_ANLGIN_PIN); // Reads the analogue signal from Task4 Analog Pin
+    currInd = (currInd + 1) % NUM_PARAMS; // Increments the index for the next reading
     // Sum array and divide to get average
     double filtAnIn = 0;
     for (uint8 i = 0; i < NUM_PARAMS; i++) {
-      filtAnIn += anIn[i];
+      filtAnIn += anIn[i]; // Adds all the elements in the anIn array
     }
-    filtAnIn /= NUM_PARAMS;
+    filtAnIn /= NUM_PARAMS; // Divides the sum of the array by the number of parameters
     // Turn on LED if average is above half maximium of 12 bit integer (4096 / 2 = THRESH)
-    digitalWrite(T4_LED_PIN, (filtAnIn > TASK4_THRESH));
-    waitTask(TASK4_P);
+    digitalWrite(Task4_LED_PIN, (filtAnIn > TASK4_THRESH)); // Turns on the LED if the average is above the threshold
+    waitTask(TASK4_P); // Waits for the specified time period for the task4
   }
 }
 
-// Period = 100ms / Rate = 10Hz
+// Task 5 function (Period = 100ms / Rate = 10Hz)
 void task5(void *pvParameters) {
   (void) pvParameters;
   for (;;) {
     if(xSemaphoreTake(freqSem, portMAX_DELAY) == pdTRUE) {
       // Map frequencies from 333Hz & 500Hz - 1000Hz to 0 - 99
       // Constrain to 0 - 99 as map() only creates gradient
-      int normFreqT2 = map(freqs.freq_t2, TASK2_MINFREQ, TASK2_MAXFREQ, TASK5_MIN, TASK5_MAX);
-      normFreqT2 = constrain(normFreqT2, TASK5_MIN, TASK5_MAX);
-      int normFreqT3 = map(freqs.freq_t3, TASK3_MINFREQ, TASK3_MAXFREQ, TASK5_MIN, TASK5_MAX);
-      normFreqT3 = constrain(normFreqT3, TASK5_MIN, TASK5_MAX);
+      int normFreqT2 = map(freqs.freq_t2, TASK2_MINFREQ, TASK2_MAXFREQ, TASK5_MIN, TASK5_MAX); // Maps the frequency of Task2 to a value between 0 and 99
+      normFreqT2 = constrain(normFreqT2, TASK5_MIN, TASK5_MAX); // Constrains the value to between 0 and 99
+      int normFreqT3 = map(freqs.freq_t3, TASK3_MINFREQ, TASK3_MAXFREQ, TASK5_MIN, TASK5_MAX); // Maps the frequency of Task3 to a value between 0 and 99
+      normFreqT3 = constrain(normFreqT3, TASK5_MIN, TASK5_MAX); // Constrains the value to between 0 and 99
       // Print to serial monitor
-      Serial.print(normFreqT2);
-      Serial.print(",");
-      Serial.println(normFreqT3);
-      xSemaphoreGive(freqSem);
+      Serial.print(normFreqT2); // Prints the frequency of Task2
+      Serial.print(","); // Prints a comma
+      Serial.println(normFreqT3); // Prints the frequency of Task3
+      xSemaphoreGive(freqSem); // Unlocks the semaphore
     }
-    waitTask(TASK5_P);
+    waitTask(TASK5_P); // Waits for the specified time period for the task5
   }
 }
 
-// Period = 10ms / Rate = 100Hz
+// Task 6 function (Period = 10ms / Rate = 100Hz)
 void task6(void *pvParameters) {
   (void) pvParameters;
   for (;;) {
-    uint8 btn = digitalRead(T6_PIN);
-    xQueueSend(btnQueue, &btn, 10);
-    waitTask(TASK6_P);
+    uint8 btn = digitalRead(Task6_PIN); // Reads the digital signal from Task6 pin
+    xQueueSend(btnQueue, &btn, 10); // Sends the value of the button to the queue with a timeout of 10ms
+    waitTask(TASK6_P); // Waits for the specified time period for the Task6
   }
 }
 
-// Period = 8ms / Rate = 125Hz
+// Task 7 function ( Period = 8ms / Rate = 125Hz)
 void task7(void *pvParameters) {
   (void) pvParameters;
   for (;;) {
-    uint8 btn = 0;
-    if(xQueueReceive(btnQueue, &btn, 10) == pdPASS) {
-      digitalWrite(T7_PIN, btn);
+    uint8 btn = 0; // Initialises the button variable
+    if(xQueueReceive(btnQueue, &btn, 10) == pdPASS) { // Receives the value of the button from the queue with a timeout of 10ms
+      digitalWrite(Task7_PIN, btn); // Writes the value of the button to the Task7 pin
     }
-    waitTask(TASK7_P);
+    waitTask(TASK7_P); // Waits for the specified time period for the Task7
   }
 }
 
